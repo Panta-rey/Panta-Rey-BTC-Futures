@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Panta Rey — Stromschnelle · Intraday-Hebel-Cockpit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0E16; --panel:#101622; --panel2:#0D131F; --line:#1C2738; --line2:#243349;
+    --ink:#E8EEF6; --mut:#7E8DA1; --mut2:#5C6B80;
+    --teal:#2FBFA0; --coral:#F2616B; --amber:#E3B341; --rapid:#4CC9F0; --violet:#9A8CF0;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Space Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  body{max-width:580px;margin:0 auto;padding:14px 14px 70px}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .eb{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border:1px solid var(--line2);border-radius:50%;color:var(--mut);font-size:10px;cursor:pointer;user-select:none;margin-left:6px;line-height:1;flex:none;vertical-align:middle}
+  .eb:hover{color:var(--rapid);border-color:var(--rapid)}
+  header{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+  .brand{display:flex;flex-direction:column;line-height:1}
+  .brand .over{font-size:11px;color:var(--rapid);font-weight:600;letter-spacing:1.2px;text-transform:uppercase}
+  .brand .main{font-size:19px;color:var(--ink);font-weight:700;letter-spacing:.2px;margin-top:3px}
+  .hd{color:var(--mut);font-size:11px;margin-left:auto;text-align:right;line-height:1.4}
+  .hd b{color:var(--ink);font-weight:600}
+  .live{display:inline-flex;align-items:center;gap:5px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--mut)}
+  .dot.on{background:var(--teal);animation:p 2s infinite}
+  @keyframes p{0%{box-shadow:0 0 0 0 rgba(47,191,160,.5)}70%{box-shadow:0 0 0 6px rgba(47,191,160,0)}100%{box-shadow:0 0 0 0 rgba(47,191,160,0)}}
+  .rfr{background:none;border:1px solid var(--line2);color:var(--mut);border-radius:7px;font-size:13px;padding:3px 9px;cursor:pointer;font-family:inherit}
+  .rfr:hover{color:var(--ink);border-color:var(--rapid)}
+  .secLab{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:1.2px;margin:20px 2px 9px;display:flex;align-items:center;gap:2px}
+  .secLab .n{color:var(--mut2);font-family:var(--mono);margin-right:7px}
+  .regime{border-radius:18px;padding:20px 17px 17px;margin-bottom:6px;border:1px solid var(--line2);position:relative;overflow:hidden;background:linear-gradient(180deg,var(--panel),var(--panel2))}
+  .regime::before{content:'';position:absolute;inset:0;opacity:.10;pointer-events:none;background:radial-gradient(120% 80% at 0% 0%, var(--rc,var(--rapid)), transparent 60%)}
+  .rTop{display:flex;align-items:center;gap:8px;position:relative}
+  .rEyebrow{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:1.4px}
+  .rName{font-size:30px;font-weight:700;line-height:1.05;margin:8px 0 2px;position:relative;color:var(--rc,var(--ink))}
+  .rInstrument{font-size:15px;font-weight:600;position:relative}
+  .rMeta{font-size:12px;color:var(--mut);margin-top:9px;line-height:1.5;position:relative}
+  .rMeta b{color:var(--ink)}
+  .badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px;border:1px solid var(--rc,var(--line2));color:var(--rc,var(--ink));margin-top:4px}
+  .squeeze{display:none;margin:8px 0 6px;border:1px solid var(--coral);border-radius:12px;padding:11px 13px;background:rgba(242,97,107,.08);font-size:12.5px;line-height:1.5}
+  .squeeze.on{display:block}
+  .squeeze b{color:var(--coral)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:13px 14px;margin-bottom:9px}
+  .crow{display:flex;align-items:center;gap:9px}
+  .cdot{width:9px;height:9px;border-radius:50%;flex:none;background:var(--mut)}
+  .cname{font-size:13px;font-weight:600;display:flex;align-items:center}
+  .cval{margin-left:auto;font-size:14px;font-weight:600;text-align:right}
+  .cmeta{color:var(--mut);font-size:11px;margin-top:5px;line-height:1.45}
+  .gauge{position:relative;height:26px;border-radius:8px;overflow:hidden;margin:4px 0 0;background:linear-gradient(90deg,var(--coral) 0%, #3a2a30 33%, #18202e 50%, #28332e 67%, var(--teal) 100%)}
+  .dz{position:absolute;top:0;bottom:0;left:40%;right:40%;background:repeating-linear-gradient(45deg,transparent,transparent 5px,rgba(227,179,65,.10) 5px,rgba(227,179,65,.10) 10px);border-left:1px dashed rgba(227,179,65,.4);border-right:1px dashed rgba(227,179,65,.4)}
+  .needle{position:absolute;top:-3px;bottom:-3px;width:3px;background:var(--ink);border-radius:2px;box-shadow:0 0 8px rgba(232,238,246,.6);transition:left .5s cubic-bezier(.4,0,.2,1);transform:translateX(-50%)}
+  .scaleRow{display:flex;justify-content:space-between;margin-top:7px;font-size:10px;color:var(--mut)}
+  .scaleRow .l{color:var(--coral)} .scaleRow .r{color:var(--teal)}
+  .scoreHead{display:flex;align-items:baseline;gap:8px;margin-bottom:7px}
+  .scoreVal{font-size:24px;font-weight:700;font-family:var(--mono)}
+  .scoreWord{font-size:15px;font-weight:600}
+  .scoreInt{font-size:13px;color:var(--mut)}
+  .contrib{height:6px;border-radius:3px;background:#0b1320;margin-top:8px;position:relative;overflow:hidden}
+  .contrib .mid{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line2)}
+  .contrib .fill{position:absolute;top:0;bottom:0;border-radius:3px;transition:all .5s}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .hz{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:13px 14px}
+  .hzLab{font-size:11px;color:var(--rapid);font-weight:600;text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px}
+  .hzSub{font-size:10px;color:var(--mut2);margin-bottom:9px}
+  .hzRow{display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;gap:8px}
+  .hzRow span:first-child{color:var(--mut)}
+  .hzRow b{font-weight:600;text-align:right}
+  .sqbar{height:6px;border-radius:3px;background:#0b1320;margin-top:3px;overflow:hidden}
+  .sqbar .f{height:100%;background:linear-gradient(90deg,var(--teal),var(--amber),var(--coral));transition:width .5s}
+  .lvlbar{position:relative;height:34px;border-radius:8px;background:#0b1320;margin:16px 0 6px;border:1px solid var(--line)}
+  .lvlbar .seg{position:absolute;top:0;bottom:0;background:rgba(76,201,240,.07)}
+  .lvlmark{position:absolute;top:-1px;bottom:-1px;width:2px;background:var(--mut2)}
+  .lvlmark.now{background:var(--ink);width:3px;box-shadow:0 0 7px rgba(232,238,246,.6);transition:left .5s}
+  .lvlmark span{position:absolute;top:-15px;left:50%;transform:translateX(-50%);font-size:9px;white-space:nowrap;color:var(--mut)}
+  .lvlrow{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);font-family:var(--mono)}
+  .lvlrow .h{color:var(--teal)} .lvlrow .l{color:var(--coral)}
+  .liqrow{display:flex;justify-content:space-between;font-size:12px;margin:9px 0 4px;gap:10px}
+  .liqrow .b{font-weight:600}
+  .stream{font-family:var(--mono);font-size:11px;max-height:142px;overflow-y:auto;border-top:1px solid var(--line);padding-top:8px;margin-top:4px}
+  .li{display:flex;gap:8px;padding:2px 0;color:var(--mut)}
+  .li .side{width:50px;font-weight:600}
+  .li.long .side{color:var(--coral)} .li.short .side{color:var(--teal)}
+  .li .amt{margin-left:auto;color:var(--ink)}
+  .empty{color:var(--mut2);font-size:11px;padding:6px 0}
+  .instr{background:var(--panel);border:1px solid var(--line2);border-radius:13px;padding:14px 15px;margin-bottom:9px}
+  .instr h4{margin:0 0 8px;font-size:14px;display:flex;align-items:center}
+  .instr ul{margin:0;padding-left:18px}
+  .instr li{font-size:12.5px;line-height:1.55;color:#c8d2de;margin-bottom:6px}
+  .instr li b{color:var(--ink)}
+  .check label{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;line-height:1.45;padding:9px 0;border-bottom:1px solid var(--line);color:#c8d2de;cursor:pointer}
+  .check label:last-child{border-bottom:none}
+  .check input{margin-top:2px;accent-color:var(--rapid);flex:none}
+  .check label b{color:var(--ink)}
+  footer{margin-top:22px;color:var(--mut);font-size:10.5px;line-height:1.65}
+  footer b{color:var(--ink)}
+  .ban{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:12px 13px;margin-bottom:10px;font-size:11px;line-height:1.6}
+  .ban .hl{color:var(--amber);font-weight:600}
+  .scrim{position:fixed;inset:0;background:rgba(4,7,12,.66);opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
+  .scrim.on{opacity:1;pointer-events:auto}
+  .sheet{position:fixed;left:0;right:0;bottom:0;max-width:580px;margin:0 auto;z-index:41;background:var(--panel);border:1px solid var(--line2);border-bottom:none;border-radius:18px 18px 0 0;padding:18px 19px calc(20px + env(safe-area-inset-bottom));transform:translateY(110%);transition:transform .26s cubic-bezier(.4,0,.2,1);max-height:80vh;overflow-y:auto}
+  .sheet.on{transform:translateY(0)}
+  .sheet h3{margin:2px 0 9px;font-size:16px}
+  .sheet p{margin:0 0 10px;font-size:13px;color:#c8d2de;line-height:1.6}
+  .sheet .hist{color:var(--mut);font-size:12px;border-top:1px solid var(--line);padding-top:10px;line-height:1.55}
+  .sheet .x{position:absolute;top:14px;right:16px;color:var(--mut);cursor:pointer;font-size:19px}
+  @media(max-width:430px){ .rName{font-size:25px} .grid2{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand"><span class="over">Panta Rey</span><span class="main">₿ Stromschnelle</span></div>
+  <div class="hd">
+    BTC <b id="px" class="num">—</b> · <span class="live"><span class="dot" id="dot"></span><span id="liveTxt">verbinde…</span></span><br>
+    <span id="upd" class="num">—</span>
+  </div>
+  <button class="rfr" id="rfr">↻</button>
+</header>
+
+<div class="secLab"><span class="n">01</span>Markt-Regime — welches Instrument? <span class="eb" data-eb="regime">?</span></div>
+<div class="regime" id="regimeCard">
+  <div class="rTop"><span class="rEyebrow">Aktuelles Terrain</span></div>
+  <div class="rName" id="regimeName">lade…</div>
+  <div class="rInstrument" id="regimeInstr">—</div>
+  <div class="badge" id="regimeBadge" style="display:none"></div>
+  <div class="rMeta" id="regimeMeta">Bestimme Trendstärke (ADX), Vola-Regime und OI-Richtung…</div>
+</div>
+<div class="squeeze" id="squeezeBanner"><b>⚠ Squeeze-Risiko aktiv.</b> <span id="squeezeTxt"></span></div>
+
+<div class="secLab"><span class="n">02</span>Positionierung — welche Richtung? <span class="eb" data-eb="score">?</span></div>
+<div class="card">
+  <div class="scoreHead"><span class="scoreVal" id="scoreVal">—</span><span class="scoreWord" id="scoreWord">lade…</span><span class="scoreInt" id="scoreInt"></span></div>
+  <div class="gauge"><div class="dz"></div><div class="needle" id="needle" style="left:50%"></div></div>
+  <div class="scaleRow"><span class="l">◄ Longs überfüllt</span><span style="color:var(--mut2)">ausgeglichen</span><span class="r">Shorts überfüllt ►</span></div>
+  <div class="cmeta" id="scoreDrv" style="margin-top:9px">—</div>
+</div>
+<div class="card">
+  <div class="crow"><span class="cdot" id="d_fund"></span><span class="cname">Funding-Perzentil <span class="eb" data-eb="funding">?</span></span><span class="cval" id="v_fund">—</span></div>
+  <div class="contrib"><div class="mid"></div><div class="fill" id="f_fund"></div></div>
+  <div class="cmeta" id="m_fund">—</div>
+</div>
+<div class="card">
+  <div class="crow"><span class="cdot" id="d_ls"></span><span class="cname">Long/Short-Konten <span class="eb" data-eb="ls">?</span></span><span class="cval" id="v_ls">—</span></div>
+  <div class="contrib"><div class="mid"></div><div class="fill" id="f_ls"></div></div>
+  <div class="cmeta" id="m_ls">—</div>
+</div>
+<div class="card">
+  <div class="crow"><span class="cdot" id="d_tk"></span><span class="cname">Taker Buy/Sell <span class="eb" data-eb="taker">?</span></span><span class="cval" id="v_tk">—</span></div>
+  <div class="contrib"><div class="mid"></div><div class="fill" id="f_tk"></div></div>
+  <div class="cmeta" id="m_tk">—</div>
+</div>
+
+<div class="secLab"><span class="n">03</span>Zeithorizont <span class="eb" data-eb="horizon">?</span></div>
+<div class="grid2">
+  <div class="hz">
+    <div class="hzLab">Kurzfristig</div><div class="hzSub">~1 Woche</div>
+    <div class="hzRow"><span>Funding-Trend 7T</span><b id="tw_fund">—</b></div>
+    <div class="hzRow"><span>Squeeze-Druck <span class="eb" data-eb="squeeze">?</span></span><b id="tw_sq">—</b></div>
+    <div class="sqbar"><div class="f" id="tw_sqbar" style="width:0%"></div></div>
+  </div>
+  <div class="hz">
+    <div class="hzLab">Swing</div><div class="hzSub">~1 Monat</div>
+    <div class="hzRow"><span>EMA-20 Regime</span><b id="tm_ema">—</b></div>
+    <div class="hzRow"><span>OI-Trend 30T</span><b id="tm_oi">—</b></div>
+    <div class="hzRow"><span>Vola-Regime</span><b id="tm_vol">—</b></div>
+  </div>
+</div>
+
+<div class="secLab"><span class="n">04</span>Observierbare Levels — für Grid-Range <span class="eb" data-eb="levels">?</span></div>
+<div class="card">
+  <div class="lvlbar" id="lvlbar"><div class="seg" id="lvlseg"></div><div class="lvlmark now" id="lvlnow" style="left:50%"><span id="lvlnowtxt"></span></div></div>
+  <div class="lvlrow"><span class="l" id="lvl30l">—</span><span style="color:var(--mut2)">30-Tage-Spanne</span><span class="h" id="lvl30h">—</span></div>
+  <div class="lvlrow" style="margin-top:4px"><span class="l" id="lvl7l">—</span><span style="color:var(--mut2)">7-Tage-Spanne</span><span class="h" id="lvl7h">—</span></div>
+  <div class="cmeta" id="lvlmeta" style="margin-top:9px">—</div>
+</div>
+
+<div class="secLab"><span class="n">05</span>Instrument-Ableitung <span class="eb" data-eb="instrument">?</span></div>
+<div class="instr"><h4 id="instrTitle">—</h4><ul id="instrBody"><li>lade…</li></ul></div>
+
+<div class="secLab"><span class="n">06</span>Kontext — bewusst NICHT im Score</div>
+<div class="card">
+  <div class="crow"><span class="cdot" id="d_oi"></span><span class="cname">Open Interest · Regime <span class="eb" data-eb="oi">?</span></span><span class="cval" id="v_oi">—</span></div>
+  <div class="cmeta" id="m_oi">—</div>
+</div>
+<div class="card">
+  <div class="crow"><span class="cdot" id="d_vol"></span><span class="cname">Realisierte Vola · Perzentil <span class="eb" data-eb="vol">?</span></span><span class="cval" id="v_vol">—</span></div>
+  <div class="cmeta" id="m_vol">—</div>
+</div>
+<div class="card">
+  <div class="crow"><span class="cdot" id="d_liq"></span><span class="cname">Liquidationen · live <span class="eb" data-eb="liq">?</span></span></div>
+  <div class="liqrow"><span>Longs liquidiert (1h): <span class="b num" id="liqL" style="color:var(--coral)">—</span></span><span>Shorts (1h): <span class="b num" id="liqS" style="color:var(--teal)">—</span></span></div>
+  <div class="cmeta" style="margin:2px 0 2px">Fenster zählt ab Seitenaufruf — kein historischer Backfill. Direkt nach dem Laden ist $0 normal.</div>
+  <div class="stream" id="stream"><div class="empty">sammelt Liquidationen ab jetzt…</div></div>
+</div>
+
+<div class="secLab"><span class="n">07</span>Vor jedem Trade — Checkliste <span class="eb" data-eb="checklist">?</span></div>
+<div class="card check">
+  <label><input type="checkbox"><span><b>Regime stimmt mit Instrument überein?</b> Grid nur bei RANGING, direktional nur bei TRENDING. Bei ÜBERGANG/CHAOTISCH/Squeeze: warten oder sehr klein.</span></label>
+  <label><input type="checkbox"><span><b>Richtung gegen das Crowding?</b> Wenn deine Seite schon überfüllt ist, tradest du in ein Squeeze-Risiko hinein.</span></label>
+  <label><input type="checkbox"><span><b>Stop-Loss definiert?</b> Das Tool sagt ihn dir nicht. Ohne Grid-Range hast du kein eingebautes Limit — du musst es setzen.</span></label>
+  <label><input type="checkbox"><span><b>Positionsgrösse relativ zum Kapital?</b> Hebel multipliziert beide Richtungen. Lege fest, was ein Stop dich kostet, bevor du öffnest.</span></label>
+  <label><input type="checkbox"><span><b>Funding-Kosten über die Haltedauer?</b> Bei 1W+ zahlt oder bekommt deine Seite Funding — über Tage summiert sich das.</span></label>
+  <label><input type="checkbox"><span><b>Plan für Regime-Wechsel?</b> Was tust du, wenn RANGING in TRENDING kippt, während dein Grid läuft — oder umgekehrt?</span></label>
+</div>
+
+<footer>
+  <div class="ban"><span class="hl">Was dieses Cockpit ist — und nicht ist.</span> Es liefert <b>Regime-Klarheit</b> (welches Instrument passt), eine <b>Positionierungs-Tendenz</b> (wer steht überfüllt) und <b>Zeithorizont-Kontext</b>. Es gibt <b>keine</b> Einstiegs-/Ausstiegssignale, keine Preis-Targets, keine Stop-Loss- oder konkrete Pionex-Parameter. Du liest, du entscheidest.</div>
+  <b>Datenquellen:</b> Binance Futures <span class="num">fapi</span> (Funding, OI, Konten-/Taker-Ratio) · Spot-Kerzen <span class="num">api</span> (1h+1d für ADX/EMA/Vola/Levels) · Liquidationen <span class="num">fstream</span>-WebSocket (forceOrder, gemessen).<br>
+  <b>Regime-Logik:</b> ADX(14) auf Tageskerzen (Trendstärke), realisierte 24h-Vola-Perzentil (~41 T), OI-Richtung. <b>Trend hat Vorrang</b> — hohe Vola ist Risiko, nicht Regime. Schwellen (heuristisch, offengelegt): Trending ADX≥<span class="num">25</span> (unabhängig der Vola), Ranging ADX&lt;<span class="num">20</span>, Chaotisch nur bei ADX&lt;<span class="num">25</span> <b>und</b> Vola≥<span class="num">88.</span> Pct. Squeeze-Overlay: OI&nbsp;24h&gt;<span class="num">+5%</span> &amp; Vola&gt;<span class="num">75.</span> &amp; |Score|&gt;<span class="num">60</span>.<br>
+  <b>Score-Ehrlichkeit:</b> Funding (Gewicht 0.50) mit Absolut-Gate — unter Neutral (0.01%/8h) zählt die relative Übergewichtung gedämpft (Faktor 0.35–1.0). Konten-Ratio (0.20, retail-lastig, ~30 T). Taker (0.30, ~30 T). Achsen perzentil-normiert, Gewichte reliabilitäts-basiert (nicht datengefittet), bei Quellenausfall renormiert. OI/Vola/Liquidationen sind Kontext, nie im Score.<br>
+  <b>Bewusst NICHT drin:</b> Multi-Exchange (nur Binance), Heatmaps/Cluster-Prognosen, gespeicherter Perzentil-Verlauf, Alarme, andere Assets, 3–6-Monats-Makro (→ Panta Rey / Back to the Future).
+</footer>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet"><span class="x" id="sx">✕</span><h3 id="shT"></h3><p id="shW"></p><div class="hist" id="shH"></div></div>
+
+<script>
+var SYM='BTCUSDT';
+var FAPI='https://fapi.binance.com', API='https://api.binance.com';
+var WS='wss://fstream.binance.com/ws/btcusdt@forceOrder';
+var REFRESH_MS=60000, DEADZONE=20;
+var W={fund:0.50, ls:0.20, tk:0.30};
+var FUND_NEUTRAL=0.0001;
+var CONFIG={ regime:{ rangeADX:20, trendADX:25, chaosVol:0.88, sqOI:5, sqVol:0.75, sqCrowd:60 } };
+var LIQ_WINDOW=3600*1000, LIQ_MAX=18;
+var liqEvents=[], lastPx=null;
+
+function $(id){return document.getElementById(id);}
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
+function mean(a){return a.length? a.reduce(function(x,y){return x+y;},0)/a.length : 0;}
+function fmtUsd(n){ if(n==null||isNaN(n))return '—'; var a=Math.abs(n);
+  if(a>=1e9)return (n/1e9).toFixed(2)+' Mrd'; if(a>=1e6)return (n/1e6).toFixed(2)+' Mio';
+  if(a>=1e3)return (n/1e3).toFixed(1)+' k'; return n.toFixed(0); }
+function fmtPx(n){ return n==null?'—':'$'+Number(n).toLocaleString('de-CH',{maximumFractionDigits:0}); }
+function pctStr(n){ return (n>=0?'+':'')+n.toFixed(n>=10||n<=-10?0:1)+'%'; }
+async function jget(url,tries){ tries=tries||3; var err;
+  for(var i=0;i<tries;i++){ try{ var r=await fetch(url); if(!r.ok)throw new Error(r.status); return await r.json(); }
+    catch(e){ err=e; await sleep(250*(i+1)); } } throw err; }
+function percentile(hist,val){ if(!hist.length)return null;
+  var s=hist.slice().sort(function(a,b){return a-b;}), lo=0,hi=s.length;
+  while(lo<hi){ var m=(lo+hi)>>1; if(s[m]<=val)lo=m+1; else hi=m; } return lo/s.length; }
+function signedFromPct(p){ return -(2*p-1); }
+function colorFor(s){ if(Math.abs(s)<0.18)return 'var(--amber)'; return s<0?'var(--coral)':'var(--teal)'; }
+function setContrib(el,s){ var mag=Math.min(Math.abs(s),1)*50; el.style.background=colorFor(s);
+  if(s<0){ el.style.right='50%'; el.style.left=(50-mag)+'%'; } else { el.style.left='50%'; el.style.right=(50-mag)+'%'; } }
+
+function emaSeries(v,p){ var k=2/(p+1), o=[v[0]]; for(var i=1;i<v.length;i++)o.push(v[i]*k+o[i-1]*(1-k)); return o; }
+function computeADX(H,L,C,period){
+  period=period||14; var n=C.length; if(n<period*3) return null;
+  var tr=[],pDM=[],mDM=[];
+  for(var i=1;i<n;i++){ var up=H[i]-H[i-1], dn=L[i-1]-L[i];
+    pDM.push(up>dn&&up>0?up:0); mDM.push(dn>up&&dn>0?dn:0);
+    tr.push(Math.max(H[i]-L[i],Math.abs(H[i]-C[i-1]),Math.abs(L[i]-C[i-1]))); }
+  function wild(arr){ var sm=[],s=0,k; for(k=0;k<period;k++)s+=arr[k]; sm[period-1]=s;
+    for(k=period;k<arr.length;k++){ s=s-s/period+arr[k]; sm[k]=s; } return sm; }
+  var trS=wild(tr),pS=wild(pDM),mS=wild(mDM),dx=[];
+  for(var i=period-1;i<tr.length;i++){ if(!trS[i]){ dx.push(0); continue; }
+    var pdi=100*pS[i]/trS[i], mdi=100*mS[i]/trS[i], d=pdi+mdi; dx.push(d===0?0:100*Math.abs(pdi-mdi)/d); }
+  if(dx.length<period) return null;
+  var adx=0,k; for(k=0;k<period;k++)adx+=dx[k]; adx/=period;
+  for(k=period;k<dx.length;k++) adx=(adx*(period-1)+dx[k])/period;
+  var li=tr.length-1, pdiN=trS[li]?100*pS[li]/trS[li]:0, mdiN=trS[li]?100*mS[li]/trS[li]:0;
+  return {adx:adx, plusDI:pdiN, minusDI:mdiN};
+}
+
+async function getKlines(interval,limit){ return jget(API+'/api/v3/klines?symbol='+SYM+'&interval='+interval+'&limit='+limit); }
+async function getFunding(){
+  var hist=await jget(FAPI+'/fapi/v1/fundingRate?symbol='+SYM+'&limit=1000');
+  var rates=hist.map(function(h){return parseFloat(h.fundingRate);});
+  var cur=rates[rates.length-1];
+  try{ var pi=await jget(FAPI+'/fapi/v1/premiumIndex?symbol='+SYM); cur=parseFloat(pi.lastFundingRate); }catch(e){}
+  var p=percentile(rates,cur), r7=rates.slice(-21), p7=rates.slice(-42,-21);
+  return {cur:cur, p:p, signed:signedFromPct(p), avg7:mean(r7), trend7:mean(r7)-mean(p7)};
+}
+async function getLS(){ var h=await jget(FAPI+'/futures/data/globalLongShortAccountRatio?symbol='+SYM+'&period=2h&limit=500');
+  var a=h.map(function(x){return parseFloat(x.longShortRatio);}), c=a[a.length-1], p=percentile(a,c);
+  return {cur:c, p:p, signed:signedFromPct(p)}; }
+async function getTaker(){ var h=await jget(FAPI+'/futures/data/takerlongshortRatio?symbol='+SYM+'&period=2h&limit=500');
+  var a=h.map(function(x){return parseFloat(x.buySellRatio);}), c=a[a.length-1], p=percentile(a,c);
+  return {cur:c, p:p, signed:signedFromPct(p)}; }
+async function getOI(klines1h){
+  var cur=await jget(FAPI+'/fapi/v1/openInterest?symbol='+SYM);
+  var h24=await jget(FAPI+'/futures/data/openInterestHist?symbol='+SYM+'&period=1h&limit=24');
+  var oiNow=parseFloat(cur.openInterest), oi24=parseFloat(h24[0].sumOpenInterest), dOI=(oiNow/oi24-1)*100, d30=null;
+  try{ var h30=await jget(FAPI+'/futures/data/openInterestHist?symbol='+SYM+'&period=1d&limit=30');
+       d30=(parseFloat(h30[h30.length-1].sumOpenInterest)/parseFloat(h30[0].sumOpenInterest)-1)*100; }catch(e){}
+  var n=klines1h.length, p0=parseFloat(klines1h[Math.max(0,n-25)][4]), p1=parseFloat(klines1h[n-1][4]);
+  return {dOI:dOI, dOI30:d30, dPx:(p1/p0-1)*100};
+}
+function getVol(klines1h){
+  var c=klines1h.map(function(k){return parseFloat(k[4]);}), lr=[];
+  for(var i=1;i<c.length;i++)lr.push(Math.log(c[i]/c[i-1]));
+  var win=24, vols=[];
+  for(var j=win;j<=lr.length;j++){ var s=lr.slice(j-win,j), m=mean(s);
+    vols.push(Math.sqrt(mean(s.map(function(x){return (x-m)*(x-m);})))); }
+  if(!vols.length)return null;
+  return {p:percentile(vols,vols[vols.length-1])};
+}
+function getLevels(klines1h){
+  var n=klines1h.length;
+  function hl(bars){ var sl=klines1h.slice(Math.max(0,n-bars));
+    return { hi:Math.max.apply(null,sl.map(function(k){return parseFloat(k[2]);})),
+             lo:Math.min.apply(null,sl.map(function(k){return parseFloat(k[3]);})) }; }
+  return {d7:hl(168), d30:hl(720)};
+}
+
+function classifyRegime(adx,volP,oiD,crowdAbs){
+  var R=CONFIG.regime, squeeze=(oiD>R.sqOI)&&(volP>R.sqVol)&&(crowdAbs>R.sqCrowd), base;
+  if(adx==null) base='UNBEKANNT';
+  else if(adx>=R.trendADX) base='TRENDING';                        // Trend dominiert — Vola = Risiko, nicht Regime
+  else if(adx<R.rangeADX) base=(volP>=R.chaosVol)?'CHAOTISCH':'RANGING';
+  else base=(volP>=R.chaosVol)?'CHAOTISCH':'ÜBERGANG';            // 20–25: Übergang, ausser Vola extrem
+  return {base:base, squeeze:squeeze, hotVol:(volP>=R.chaosVol)};
+}
+var REGIME_DEF={
+  RANGING:{instr:'Grid-Terrain', col:'var(--teal)', badge:'Grid Bot passt'},
+  TRENDING:{instr:'Direktional-Terrain', col:'var(--violet)', badge:'Long/Short ohne Grid'},
+  'ÜBERGANG':{instr:'Unklar — klein oder warten', col:'var(--amber)', badge:'kein klares Setup'},
+  CHAOTISCH:{instr:'Warten — kein sauberes Terrain', col:'var(--coral)', badge:'Hände weg'},
+  UNBEKANNT:{instr:'Daten unvollständig', col:'var(--mut)', badge:'—'}
+};
+function instrFor(base,dirUp,volP,score){
+  var volTxt=volP>=0.75?'hoch':volP>=0.4?'mittel':'niedrig';
+  if(base==='RANGING') return {t:'RANGING → Grid Bot ist das passende Instrument', items:[
+    'Die <b>Range-Grenzen</b> liest du aus den 7T-/30T-Levels oben ab — gemessene Hochs/Tiefs, keine Prognose.',
+    'Vola ist gerade <b>'+volTxt+'</b>: höhere Vola → weitere Grid-Abstände, niedrigere → engere. Du legst die Stufung fest.',
+    'Hebel <b>umgekehrt zur Vola</b> denken: je nervöser, desto vorsichtiger — ein Grid liquidiert, wenn der Preis die Range verlässt.',
+    'Bias: '+(score<-DEADZONE?'Longs überfüllt → ein Long-Bias-Grid trägt mehr Rückschlag-Risiko':score>DEADZONE?'Shorts überfüllt → Mean-Reversion nach oben spricht eher für Long-Bias':'ausgeglichen → neutrales Grid')+'.' ]};
+  if(base==='TRENDING') return {t:'TRENDING '+(dirUp?'↑':'↓')+' → direktionaler Trade, KEIN statisches Grid', items:[
+    'Trendrichtung laut ADX/DI: <b>'+(dirUp?'aufwärts':'abwärts')+'</b>. Ein statisches Grid würde aus der Range laufen und ggf. liquidieren.',
+    'Vola ist <b>'+volTxt+'</b>: '+(volP>=0.75?'schneller Trend — Position <b>kleiner</b>, Stop <b>weiter</b>, sonst stösst dich das Rauschen aus, bevor die These greift':'tragbar — normale Grösse, Stop nach Struktur')+'.',
+    'Crowding: '+(score<-DEADZONE?'Longs überfüllt — ein Long läuft in Squeeze-Risiko':score>DEADZONE?'Shorts überfüllt — ein Short läuft in Squeeze-Risiko':'Positionierung ausgeglichen, sauberer für einen Trend-Einstieg')+'.',
+    'Falls dennoch Grid: nur als <b>nachgezogenes/direktionales</b> Grid in Trendrichtung — mit klarer Range-Verlassen-Regel.',
+    'Stop-Loss ist Pflicht (Checkliste) — anders als beim Grid gibt es hier kein eingebautes Limit.' ]};
+  if(base==='ÜBERGANG') return {t:'ÜBERGANG → Trendstärke unentschieden', items:[
+    'ADX zwischen Range- und Trend-Schwelle: weder sauberes Grid- noch klares Trend-Terrain.',
+    'Wenn überhaupt: <b>kleine</b> Grösse, auf Bestätigung warten (ADX kippt in eine Richtung).',
+    'Geduld ist hier selbst eine Position.' ]};
+  if(base==='CHAOTISCH') return {t:'CHAOTISCH → Vola im Extrembereich', items:[
+    'Realisierte Vola im obersten Perzentil-Bereich: hohes Whipsaw- und Liquidationsrisiko für <b>beide</b> Instrumente.',
+    'Grids werden zerrieben, direktionale Stops ausgelöst, bevor die These aufgeht.',
+    'Bestes Setup ist oft kein Setup. Warten, bis sich die Vola normalisiert.' ]};
+  return {t:'Daten unvollständig', items:['Mindestens eine Regime-Quelle fehlt. Karten mit „—" zeigen, welche.']};
+}
+
+function intensity(v){ var a=Math.abs(v); if(a<DEADZONE)return 'ausgeglichen'; if(a<45)return 'leicht'; if(a<70)return 'deutlich'; return 'extrem'; }
+function renderRegime(reg,adx,volP,score,dirUp,di){
+  var def=REGIME_DEF[reg.base]||REGIME_DEF.UNBEKANNT;
+  var dirArrow=reg.base==='TRENDING'?(dirUp?' ↑':' ↓'):'';
+  $('regimeCard').style.setProperty('--rc',def.col);
+  $('regimeName').textContent=reg.base+dirArrow; $('regimeName').style.color=def.col;
+  $('regimeInstr').textContent=def.instr; $('regimeInstr').style.color=def.col;
+  var bd=$('regimeBadge'); bd.style.display='inline-block'; bd.textContent=def.badge; bd.style.color=def.col; bd.style.borderColor=def.col;
+  var diTxt = di ? ' (+DI '+di.plusDI.toFixed(0)+' / −DI '+di.minusDI.toFixed(0)+')' : '';
+  $('regimeMeta').innerHTML='Trendstärke <b>ADX '+(adx==null?'—':adx.toFixed(0))+'</b>'+diTxt+' · realisierte Vola <b>'+(volP==null?'—':(volP*100).toFixed(0)+'. Pct')+'</b> · Positionierung <b>'+(score>0?'+':'')+score+'</b>'
+    + (reg.base==='TRENDING'&&reg.hotVol ? ' <span style="color:var(--amber)">· ⚠ Vola extrem → schneller Trend, kleiner positionieren</span>' : '');
+  var sb=$('squeezeBanner');
+  if(reg.squeeze){ sb.classList.add('on'); $('squeezeTxt').textContent='OI steigt, Vola hoch und Positionierung extrem — hier beginnen Liquidations-Kaskaden, nicht Positionen. Kontra-Signal zum kurzfristigen Einstieg.'; }
+  else sb.classList.remove('on');
+}
+function renderScore(parts){
+  var keys=['fund','ls','tk'], names={fund:'Funding',ls:'L/S-Konten',tk:'Taker-Flow'};
+  var sum=0,wsum=0,contrib={};
+  keys.forEach(function(k){ if(parts[k]&&parts[k].use!=null){ var c=parts[k].use*W[k]; contrib[k]=c; sum+=c; wsum+=W[k]; }});
+  if(wsum===0){ $('scoreWord').textContent='keine Daten'; $('scoreDrv').textContent='keine Quelle aktiv.'; return 0; }
+  var score=Math.round(sum/wsum*100);
+  $('needle').style.left=((score+100)/2)+'%';
+  $('scoreVal').textContent=(score>0?'+':'')+score;
+  var word=Math.abs(score)<DEADZONE?'Ausgeglichen':(score<0?'Longs überfüllt':'Shorts überfüllt');
+  var col=Math.abs(score)<DEADZONE?'var(--amber)':(score<0?'var(--coral)':'var(--teal)');
+  $('scoreVal').style.color=col; $('scoreWord').textContent=word; $('scoreWord').style.color=col; $('scoreInt').textContent='('+intensity(score)+')';
+  var drvK=null,drvMax=-1;
+  keys.forEach(function(k){ if(contrib[k]!=null){ var a=Math.abs(contrib[k]/wsum); if(a>drvMax){drvMax=a;drvK=k;} }});
+  if(drvK){ var pts=Math.round(contrib[drvK]/wsum*100), dir=pts<0?'Longs':pts>0?'Shorts':'neutral';
+    $('scoreDrv').innerHTML='Haupttreiber: <b>'+names[drvK]+'</b> ('+(pts>0?'+':'')+pts+' Punkte → '+dir+'-Seite). Die anderen Achsen stützen oder dämpfen.'; }
+  return score;
+}
+function cardFund(d){ if(!d){ fail('fund'); return null; }
+  $('v_fund').textContent=(d.cur*100).toFixed(4)+'%';
+  var damp=Math.min(Math.abs(d.cur)/FUND_NEUTRAL,1), use=d.signed*(0.35+0.65*damp), absMild=Math.abs(d.cur)<FUND_NEUTRAL;
+  var rel=d.signed<-0.18?'oberes Drittel der Historie':d.signed>0.18?'unteres Drittel':'nahe Median';
+  var abs=absMild?'absolut mild (< Neutral 0.01%/8h), gedämpft':(d.cur>0?'absolut positiv':'absolut negativ');
+  $('m_fund').textContent='Perzentil '+(d.p*100).toFixed(0)+' (~333 T) · '+rel+' · '+abs+'.';
+  $('d_fund').style.background=colorFor(use); setContrib($('f_fund'),use); return {use:use}; }
+function cardLS(d){ if(!d){ fail('ls'); return null; }
+  $('v_ls').textContent=d.cur.toFixed(2);
+  $('m_ls').textContent='Konten Long÷Short · Perzentil '+(d.p*100).toFixed(0)+' (~30 T) · retail-lastig, Gewicht reduziert.';
+  $('d_ls').style.background=colorFor(d.signed); setContrib($('f_ls'),d.signed); return {use:d.signed}; }
+function cardTk(d){ if(!d){ fail('tk'); return null; }
+  $('v_tk').textContent=d.cur.toFixed(2);
+  $('m_tk').textContent='aggressive Taker-Käufe÷Verkäufe · Perzentil '+(d.p*100).toFixed(0)+' (~30 T).';
+  $('d_tk').style.background=colorFor(d.signed); setContrib($('f_tk'),d.signed); return {use:d.signed}; }
+function fail(k){ $('v_'+k).textContent='—'; $('m_'+k).textContent='Quelle aus → fällt aus dem Score (renormiert).'; $('d_'+k).style.background='var(--mut)'; }
+function cardOI(d){ if(!d){ $('v_oi').textContent='—'; $('m_oi').textContent='Quelle aus.'; $('d_oi').style.background='var(--mut)'; return; }
+  var reg=d.dOI>0&&d.dPx<0?'OI↑ Preis↓ → neue Shorts (Aufwärts-Squeeze-Brennstoff)':d.dOI>0&&d.dPx>0?'OI↑ Preis↑ → neue Longs (Abwärts-Squeeze-Brennstoff)':d.dOI<0&&d.dPx>0?'OI↓ Preis↑ → Short-Eindeckung (löst auf)':'OI↓ Preis↓ → Long-Liquidation (löst auf)';
+  $('v_oi').innerHTML='<span class="num">'+pctStr(d.dOI)+'</span>';
+  $('m_oi').textContent='OI 24h '+pctStr(d.dOI)+' · Preis 24h '+pctStr(d.dPx)+'. '+reg;
+  $('d_oi').style.background=Math.abs(d.dOI)<1?'var(--mut)':(d.dOI>0?'var(--rapid)':'var(--mut)'); }
+function cardVol(d){ if(!d){ $('v_vol').textContent='—'; $('m_vol').textContent='Quelle aus.'; $('d_vol').style.background='var(--mut)'; return; }
+  var pc=d.p*100; $('v_vol').textContent=pc.toFixed(0)+'.';
+  $('m_vol').textContent='aktuelle 24h-Vola im '+pc.toFixed(0)+'. Perzentil (~41 T). '+(pc>=75?'nervöser Markt':pc<=35?'ruhig':'normal')+', kein Richtungssignal.';
+  $('d_vol').style.background=pc>=88?'var(--coral)':pc>=75?'var(--amber)':'var(--mut)'; }
+function renderHorizon(f,oi,vol,emaInfo){
+  if(f){ var t=f.trend7; $('tw_fund').textContent=(f.avg7*100).toFixed(4)+'% '+(t>0.00002?'↗':t<-0.00002?'↘':'→');
+    $('tw_fund').style.color=Math.abs(f.avg7)<FUND_NEUTRAL?'var(--mut)':(f.avg7>0?'var(--coral)':'var(--teal)'); }
+  if(emaInfo){ $('tm_ema').textContent=(emaInfo.above?'über':'unter')+' EMA-20 · '+(emaInfo.slope>0?'steigend':'fallend');
+    $('tm_ema').style.color=emaInfo.slope>0?'var(--teal)':'var(--coral)'; }
+  if(oi&&oi.dOI30!=null){ $('tm_oi').textContent=pctStr(oi.dOI30); $('tm_oi').style.color=Math.abs(oi.dOI30)<2?'var(--mut)':'var(--ink)'; }
+  if(vol){ var pc=vol.p*100; $('tm_vol').textContent=pc>=75?'hoch':pc>=40?'mittel':'niedrig'; $('tm_vol').style.color=pc>=75?'var(--coral)':pc>=40?'var(--amber)':'var(--teal)'; }
+}
+function renderSqueezeProb(volP,oiD,crowdAbs){
+  var sq=100*Math.min(1, 0.40*(volP||0)+0.30*Math.min(Math.max((oiD||0)/10,0),1)+0.30*(crowdAbs/100));
+  $('tw_sq').textContent=sq.toFixed(0)+'/100'; $('tw_sqbar').style.width=sq+'%';
+  $('tw_sq').style.color=sq>=66?'var(--coral)':sq>=33?'var(--amber)':'var(--teal)';
+}
+function renderLevels(lv,price){
+  if(!lv||price==null)return;
+  var lo=lv.d30.lo, hi=lv.d30.hi, span=(hi-lo)||1;
+  $('lvl30l').textContent=fmtPx(lo); $('lvl30h').textContent=fmtPx(hi); $('lvl7l').textContent=fmtPx(lv.d7.lo); $('lvl7h').textContent=fmtPx(lv.d7.hi);
+  var seg=$('lvlseg'), l7=(lv.d7.lo-lo)/span*100, r7=(hi-lv.d7.hi)/span*100;
+  seg.style.left=Math.max(0,l7)+'%'; seg.style.right=Math.max(0,r7)+'%';
+  var pos=Math.max(0,Math.min(100,(price-lo)/span*100));
+  $('lvlnow').style.left=pos+'%'; $('lvlnowtxt').textContent=fmtPx(price);
+  $('lvlmeta').textContent='Preis steht bei '+pos.toFixed(0)+'% der 30-Tage-Spanne. Die helle Zone ist die engere 7-Tage-Range — gemessene Hochs/Tiefs als Grid-Anker, keine Prognose.';
+}
+function renderLiq(){
+  var cut=Date.now()-LIQ_WINDOW; liqEvents=liqEvents.filter(function(e){return e.t>=cut;});
+  var L=0,S=0; liqEvents.forEach(function(e){ if(e.side==='long')L+=e.usd; else S+=e.usd; });
+  $('liqL').textContent='$'+fmtUsd(L); $('liqS').textContent='$'+fmtUsd(S);
+  $('d_liq').style.background=liqEvents.length?(L>S?'var(--coral)':'var(--teal)'):'var(--mut)';
+  var rows=liqEvents.slice(-LIQ_MAX).reverse();
+  if(!rows.length){ $('stream').innerHTML='<div class="empty">noch keine Liquidationen seit dem Laden…</div>'; return; }
+  $('stream').innerHTML=rows.map(function(e){ var t=new Date(e.t);
+    var hh=('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2)+':'+('0'+t.getSeconds()).slice(-2);
+    return '<div class="li '+e.side+'"><span class="side">'+(e.side==='long'?'LONG':'SHORT')+'</span><span>'+hh+'</span><span class="amt">$'+fmtUsd(e.usd)+'</span></div>'; }).join('');
+}
+function connectWS(){
+  try{ var ws=new WebSocket(WS);
+    ws.onopen=function(){ $('dot').classList.add('on'); $('liveTxt').textContent='live'; };
+    ws.onmessage=function(ev){ try{ var o=JSON.parse(ev.data).o; if(!o)return;
+      var usd=parseFloat(o.q)*parseFloat(o.ap||o.p);
+      liqEvents.push({t:o.T||Date.now(), side:(o.S==='SELL')?'long':'short', usd:usd}); renderLiq(); }catch(e){} };
+    ws.onclose=function(){ $('dot').classList.remove('on'); $('liveTxt').textContent='getrennt'; setTimeout(connectWS,4000); };
+    ws.onerror=function(){ try{ws.close();}catch(e){} };
+  }catch(e){ $('liveTxt').textContent='WS blockiert'; }
+}
+
+async function refresh(){
+  $('rfr').textContent='…';
+  var k1h=null,k1d=null;
+  try{ k1h=await getKlines('1h',1000); }catch(e){}
+  try{ k1d=await getKlines('1d',200); }catch(e){}
+  if(k1h){ lastPx=parseFloat(k1h[k1h.length-1][4]); $('px').textContent=fmtPx(lastPx); }
+
+  var parts={fund:null,ls:null,tk:null}, fRaw=null;
+  await Promise.all([
+    getFunding().then(function(d){fRaw=d; parts.fund=cardFund(d);}).catch(function(){cardFund(null);}),
+    getLS().then(function(d){parts.ls=cardLS(d);}).catch(function(){cardLS(null);}),
+    getTaker().then(function(d){parts.tk=cardTk(d);}).catch(function(){cardTk(null);})
+  ]);
+  var score=renderScore(parts), crowdAbs=Math.abs(score);
+
+  var oi=null,vol=null,lv=null,adxInfo=null,emaInfo=null;
+  if(k1h){ try{ oi=await getOI(k1h); }catch(e){} vol=getVol(k1h); lv=getLevels(k1h); }
+  cardOI(oi); cardVol(vol); renderLevels(lv,lastPx);
+
+  if(k1d){
+    var H=k1d.map(function(k){return parseFloat(k[2]);}), L=k1d.map(function(k){return parseFloat(k[3]);}), C=k1d.map(function(k){return parseFloat(k[4]);});
+    adxInfo=computeADX(H,L,C,14);
+    var em=emaSeries(C,20), last=em.length-1;
+    emaInfo={ above:C[C.length-1]>em[last], slope:em[last]-em[Math.max(0,last-5)] };
+  }
+  var volP=vol?vol.p:null, oiD=oi?oi.dOI:0, dirUp=adxInfo?adxInfo.plusDI>=adxInfo.minusDI:true;
+  var reg=classifyRegime(adxInfo?adxInfo.adx:null, volP==null?0:volP, oiD, crowdAbs);
+  renderRegime(reg, adxInfo?adxInfo.adx:null, volP, score, dirUp, adxInfo);
+
+  renderHorizon(fRaw, oi, vol, emaInfo);
+  renderSqueezeProb(volP, oiD, crowdAbs);
+  var ins=instrFor(reg.base, dirUp, volP==null?0.5:volP, score);
+  $('instrTitle').textContent=ins.t;
+  $('instrBody').innerHTML=ins.items.map(function(x){return '<li>'+x+'</li>';}).join('');
+
+  var now=new Date();
+  $('upd').textContent=('0'+now.getHours()).slice(-2)+':'+('0'+now.getMinutes()).slice(-2)+':'+('0'+now.getSeconds()).slice(-2);
+  $('rfr').textContent='↻';
+}
+
+var EB={
+  regime:{t:'Markt-Regime — der primäre Output', w:'Bevor du Richtung oder Grösse überlegst, kommt die Frage: welches Instrument passt überhaupt? Grid-Bots gewinnen in seitwärts pendelnden Märkten und liquidieren in Trends. Direktionale Longs/Shorts gewinnen in Trends und werden in Choppiness zerrieben. Das Regime entscheidet, WAS du tust — nicht nur wohin.', h:'Abgeleitet aus ADX(14) auf Tageskerzen (Trendstärke, richtungsneutral), realisierter Vola-Perzentil und OI-Richtung. Wichtig: der Trend hat Vorrang — ein starker Trend (ADX≥25) bleibt TRENDING, auch wenn die Vola hoch ist; hohe Vola heisst dann „schnell, kleiner positionieren", nicht „Chaos". CHAOTISCH ist reserviert für hohe Vola OHNE Trend (ADX<25) — also richtungsloses Gezappel. Schwellen sind heuristisch, im Footer offengelegt; kein Backtest dahinter, ein Lese-Rahmen, kein bewiesener Edge.'},
+  score:{t:'Positionierung — wer steht überfüllt?', w:'Ein signierter Score −100…+100. Negativ = Longs überfüllt (Abwärts-Squeeze-Risiko, falls du hier long gehst). Positiv = Shorts überfüllt. Mitte = Totzone „ausgeglichen". Drei gemessene, perzentil-normierte Achsen: Funding (halbes Gewicht), Konten-Ratio, Taker-Flow.', h:'Sekundär zum Regime: erst wenn klar ist, dass du direktional tradest, sagt dir der Score die Richtungs-Tendenz. Bei einem Grid sagt er, ob du Long- oder Short-Bias in die Range legst. Keine Kursprognose.'},
+  funding:{t:'Funding-Perzentil (Gewicht 0.50)', w:'Funding ist der direkteste Crowding-Messwert: positiv = Longs zahlen Shorts = Longs gedrängt. Gewertet wird das Perzentil gegen ~333 Tage eigene Historie, nicht der Rohwert.', h:'Absolut-Gate: liegt Funding unter dem Binance-Neutral (0.01%/8h), wird der relative Beitrag gedämpft (Faktor 0.35–1.0, je näher an null desto stärker). So kann trivial-mildes Funding den Score nicht dominieren, nur weil es perzentil-hoch ist — bei absolut nahezu null Funding gibt es keinen echten Kostendruck, also überlebt nur ein kleiner Rest des relativen Signals. Dieselbe Idee wie die Coinbase-Premium-Totzone in Panta Rey.'},
+  ls:{t:'Long/Short-Konten (Gewicht 0.20)', w:'Anteil Konten long vs. short bei Binance-Futures. Hoch = viele Konten long = retail-seitig überfüllte Longs. Perzentil über ~30 Tage (volle Binance-Retention).', h:'Bewusst niedrig gewichtet: retail-lastig und kurze Historie machen es zur weichsten der drei Achsen. Reliabilitäts-basiert reduziert, nicht datengefittet.'},
+  taker:{t:'Taker Buy/Sell (Gewicht 0.30)', w:'Verhältnis aggressiver Markt-Käufe zu -Verkäufen. Anhaltend hoch = aggressive Longs greifen zu. Perzentil über ~30 Tage.', h:'Misst Aggression/Flow, nicht stehende Positionen. Höher gewichtet als die Konten-Ratio, weil es echtes ausgeführtes Volumen ist. Achtung: in einem Trend kann anhaltender Flow „überfüllt" anzeigen, was auch schlicht Momentum sein kann — darum nicht allein lesen.'},
+  horizon:{t:'Zeithorizont', w:'Kurzfristig (~1W): Funding-Trend über 7 Tage und der Squeeze-Druck-Index — für den Einstiegs-Zeitpunkt. Swing (~1M): EMA-20-Regime, OI-Trend über 30 Tage, Vola-Regime — für die Haltedauer.', h:'3–6 Monate fehlen bewusst: Makro ist Panta Reys und Back-to-the-Futures Terrain. Funding/OI sind kurzfristige Gleichgewichts-Mechanismen, keine Makro-Indikatoren — sie dafür zu nutzen wäre overstretching.'},
+  squeeze:{t:'Squeeze-Druck (Index 0–100)', w:'Ein heuristischer Misch-Index aus drei Zutaten: realisierte Vola (40%), OI-Aufbau 24h (30%) und Betrag der Positionierung (30%). Hoch = die Bestandteile einer Liquidations-Kaskade sind gleichzeitig vorhanden.', h:'WICHTIG: das ist KEINE kalibrierte Wahrscheinlichkeit — kein Backtest sagt „bei 70 passiert zu X% ein Squeeze". Es ist ein Spannungs-Index, der drei Vorbedingungen bündelt, damit du sie nicht einzeln zusammensuchen musst. Eine ehrliche Zahl wäre „Druck-Niveau", nicht „Prozent-Chance".'},
+  levels:{t:'Observierbare Levels', w:'7-Tage- und 30-Tage-Hoch/Tief als gemessene Anker für deine Grid-Range. Die helle Zone ist die engere 7-Tage-Spanne, der Balken die 30-Tage-Spanne, die Marke der aktuelle Preis.', h:'Die ehrliche Alternative zu Liquidations-Heatmaps: echte vergangene Hochs/Tiefs (gemessen) statt modellierter Cluster (Schätzung-auf-Schätzung). Vergangene Levels sind keine Garantie für künftige Wendepunkte.'},
+  instrument:{t:'Instrument-Ableitung', w:'Pro Regime: welche Variablen du in welche Richtung drehst — Grid-Abstand, Hebel, Bias, oder kein Trade. Konkrete Zahlen erfindet das Tool bewusst nicht.', h:'Würde ich dir feste Pionex-Parameter nennen, die ich nicht backtesten kann, wäre das genau die BudSignal-Zahlenkosmetik. Stattdessen: der Markt-Zustand plus die Ableitungs-Logik — die Parameter setzt du aus deiner Erfahrung.'},
+  oi:{t:'Open Interest · Regime', w:'OI = Summe offener Kontrakte. Mit der Preisrichtung ergibt sich ein Regime: OI↑+Preis↑ neue Longs, OI↑+Preis↓ neue Shorts, OI↓ Auflösung.', h:'Speist die Regime-Klassifikation (Squeeze-Flag), ist aber NICHT im Positionierungs-Score. Wie in BTF bleibt OI Kontext.'},
+  vol:{t:'Realisierte Vola · Perzentil', w:'Aktuelle 24h-Schwankung gegen ihre eigene ~41-Tage-Verteilung. Hoch = nervöser, schneller Markt.', h:'Treibt die Regime-Schwellen (Chaotisch/Squeeze), ist aber richtungsneutral — sie sagt wie heftig, nicht wohin. Nicht im Score.'},
+  liq:{t:'Liquidationen · live', w:'Echte erzwungene Schliessungen aus dem forceOrder-Stream. SELL-Liquidation = eine Long-Position wurde geschlossen (rot), BUY = Short (grün). Summe je Seite über das letzte 1h-Fenster.', h:'GEMESSEN, kein Heatmap-Modell. Das Fenster zählt erst ab Seitenaufruf — es gibt keinen historischen Backfill, darum ist $0 direkt nach dem Laden normal. Liquidationen sind meist koinzident/nachlaufend — eine frische Kaskade heisst oft, der Stretch löst sich gerade. Deshalb Anzeige, nie im Score.'},
+  checklist:{t:'Vor jedem Trade', w:'Strukturierte Fragen, keine Empfehlungen. Das Tool liefert Regime und Crowding — aber Stop-Loss, Positionsgrösse und dein Plan für einen Regime-Wechsel sind deine Entscheidungen.', h:'Besonders beim Wechsel von Grid zu direktionalem Trading wichtig: ein Grid hat ein eingebautes Limit (die Range), eine direktionale Position nicht. Das Risiko-Management musst du explizit selbst setzen.'}
+};
+function openEB(k){ var e=EB[k]; if(!e)return; $('shT').textContent=e.t; $('shW').textContent=e.w; $('shH').textContent=e.h; $('scrim').classList.add('on'); $('sheet').classList.add('on'); }
+function closeEB(){ $('scrim').classList.remove('on'); $('sheet').classList.remove('on'); }
+document.addEventListener('click',function(ev){ var t=ev.target; if(t.classList&&t.classList.contains('eb')) openEB(t.getAttribute('data-eb')); });
+$('scrim').addEventListener('click',closeEB); $('sx').addEventListener('click',closeEB); $('rfr').addEventListener('click',refresh);
+
+connectWS(); renderLiq(); refresh();
+setInterval(refresh,REFRESH_MS); setInterval(renderLiq,5000);
+</script>
+</body>
+</html>
