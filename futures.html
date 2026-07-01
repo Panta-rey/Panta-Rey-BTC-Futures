@@ -36,6 +36,38 @@
   .lgLab{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:1.2px;display:flex;align-items:center}
   .lgHead{font-size:16px;font-weight:700;margin:3px 0 3px;transition:color .4s}
   .lgBody{font-size:12.5px;color:#c8d2de;line-height:1.5}
+  .lgTop{display:flex;align-items:center;gap:8px}
+  .logBtn{margin-left:auto;background:none;border:1px solid var(--line2);color:var(--rapid);border-radius:8px;font-size:11px;font-weight:600;padding:4px 10px;cursor:pointer;font-family:inherit;white-space:nowrap}
+  .logBtn:hover{border-color:var(--rapid);background:rgba(76,201,240,.08)}
+  .secLab.collapsible{cursor:pointer;user-select:none}
+  .secLab .chev{margin-left:auto;font-size:11px;color:var(--mut2);transition:transform .2s}
+  .secLab.collapsed .chev{transform:rotate(-90deg)}
+  .sec.hidden{display:none}
+  .fclock{font-size:11px;color:var(--mut);margin-top:7px;line-height:1.4}
+  .fclock b{color:var(--ink);font-family:var(--mono)}
+  .snap{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:2px 0 12px;font-size:12px;line-height:1.7}
+  .snap b{color:var(--ink)}
+  .logInp{width:100%;background:var(--panel2);border:1px solid var(--line2);border-radius:9px;color:var(--ink);font-family:inherit;font-size:13px;padding:9px 11px;margin-bottom:9px;box-sizing:border-box}
+  textarea.logInp{resize:vertical;min-height:52px}
+  .logInp:focus{outline:none;border-color:var(--rapid)}
+  .logSave{width:100%;background:var(--rapid);color:#06131b;border:none;border-radius:10px;font-weight:700;font-size:14px;padding:11px;cursor:pointer;font-family:inherit}
+  .logSave:hover{opacity:.9}
+  .logList{margin-top:14px}
+  .logEntry{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:11px 12px;margin-bottom:9px}
+  .logEntry .lhead{display:flex;align-items:baseline;gap:8px;font-size:11px;color:var(--mut);margin-bottom:5px}
+  .logEntry .lhead .del{margin-left:auto;color:var(--mut2);cursor:pointer;font-size:13px}
+  .logEntry .lhead .del:hover{color:var(--coral)}
+  .logEntry .lverdict{font-size:13px;font-weight:600;margin-bottom:3px}
+  .logEntry .lmeta{font-size:11px;color:var(--mut);line-height:1.5;margin-bottom:6px;font-family:var(--mono)}
+  .logEntry .lthese{font-size:12px;color:#c8d2de;line-height:1.45;margin-bottom:7px}
+  .outrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .outbtn{background:none;border:1px solid var(--line2);color:var(--mut);border-radius:7px;font-size:11px;padding:3px 9px;cursor:pointer;font-family:inherit}
+  .outbtn.on{color:var(--ink);border-color:var(--rapid);background:rgba(76,201,240,.1)}
+  .calib{background:var(--panel2);border:1px solid var(--line2);border-radius:11px;padding:11px 13px;margin:14px 0 4px}
+  .calib .ct{font-size:11px;color:var(--rapid);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px;font-weight:600}
+  .calib .crow2{display:flex;justify-content:space-between;font-size:11.5px;color:#c8d2de;padding:3px 0;gap:10px}
+  .calib .crow2 .num{color:var(--mut)}
+  .logEmpty{color:var(--mut2);font-size:12px;padding:8px 0;line-height:1.55}
   .secLab{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:1.2px;margin:20px 2px 9px;display:flex;align-items:center;gap:2px}
   .secLab .n{color:var(--mut2);font-family:var(--mono);margin-right:7px}
   .regime{border-radius:18px;padding:20px 17px 17px;margin-bottom:6px;border:1px solid var(--line2);position:relative;overflow:hidden;background:linear-gradient(180deg,var(--panel),var(--panel2))}
@@ -128,7 +160,7 @@
 </header>
 
 <div class="lagebild" id="lagebild">
-  <div class="lgLab">Kurzlesung <span class="eb" data-eb="lagebild">?</span></div>
+  <div class="lgTop"><div class="lgLab">Kurzlesung <span class="eb" data-eb="lagebild">?</span></div><button class="logBtn" id="logBtn">⊕ Moment festhalten</button></div>
   <div class="lgHead" id="lgHead">lade…</div>
   <div class="lgBody" id="lgBody">Regime und Positionierung werden zusammengelesen…</div>
 </div>
@@ -154,6 +186,7 @@
   <div class="crow"><span class="cdot" id="d_fund"></span><span class="cname">Funding-Perzentil <span class="eb" data-eb="funding">?</span></span><span class="cval" id="v_fund">—</span></div>
   <div class="contrib"><div class="mid"></div><div class="fill" id="f_fund"></div></div>
   <div class="cmeta" id="m_fund">—</div>
+  <div class="fclock" id="fclock"></div>
 </div>
 <div class="card">
   <div class="crow"><span class="cdot" id="d_ls"></span><span class="cname">Long/Short-Konten <span class="eb" data-eb="ls">?</span></span><span class="cval" id="v_ls">—</span></div>
@@ -166,7 +199,8 @@
   <div class="cmeta" id="m_tk">—</div>
 </div>
 
-<div class="secLab"><span class="n">03</span>Zeithorizont <span class="eb" data-eb="horizon">?</span></div>
+<div class="secLab collapsible" data-target="sec-horizon"><span class="n">03</span>Zeithorizont <span class="eb" data-eb="horizon">?</span> <span class="chev">▾</span></div>
+<div class="sec" id="sec-horizon">
 <div class="grid2">
   <div class="hz">
     <div class="hzLab">Kurzfristig</div><div class="hzSub">~1 Woche</div>
@@ -182,7 +216,10 @@
   </div>
 </div>
 
-<div class="secLab"><span class="n">04</span>Observierbare Levels — für Grid-Range <span class="eb" data-eb="levels">?</span></div>
+</div>
+
+<div class="secLab collapsible" data-target="sec-levels"><span class="n">04</span>Observierbare Levels — für Grid-Range <span class="eb" data-eb="levels">?</span> <span class="chev">▾</span></div>
+<div class="sec" id="sec-levels">
 <div class="card">
   <div class="lvlbar" id="lvlbar"><div class="seg" id="lvlseg"></div><div class="lvlmark now" id="lvlnow" style="left:50%"><span id="lvlnowtxt"></span></div></div>
   <div class="lvlrow"><span class="l" id="lvl30l">—</span><span style="color:var(--mut2)">30-Tage-Spanne</span><span class="h" id="lvl30h">—</span></div>
@@ -190,10 +227,16 @@
   <div class="cmeta" id="lvlmeta" style="margin-top:9px">—</div>
 </div>
 
-<div class="secLab"><span class="n">05</span>Instrument-Ableitung <span class="eb" data-eb="instrument">?</span></div>
+</div>
+
+<div class="secLab collapsible" data-target="sec-instrument"><span class="n">05</span>Instrument-Ableitung <span class="eb" data-eb="instrument">?</span> <span class="chev">▾</span></div>
+<div class="sec" id="sec-instrument">
 <div class="instr"><h4 id="instrTitle">—</h4><ul id="instrBody"><li>lade…</li></ul></div>
 
-<div class="secLab"><span class="n">06</span>Kontext — bewusst NICHT im Score</div>
+</div>
+
+<div class="secLab collapsible" data-target="sec-kontext"><span class="n">06</span>Kontext — bewusst NICHT im Score <span class="chev">▾</span></div>
+<div class="sec" id="sec-kontext">
 <div class="card">
   <div class="crow"><span class="cdot" id="d_oi"></span><span class="cname">Open Interest · Regime <span class="eb" data-eb="oi">?</span></span><span class="cval" id="v_oi">—</span></div>
   <div class="cmeta" id="m_oi">—</div>
@@ -209,7 +252,10 @@
   <div class="stream" id="stream"><div class="empty">sammelt Liquidationen ab jetzt…</div></div>
 </div>
 
-<div class="secLab"><span class="n">07</span>Vor jedem Trade — Checkliste <span class="eb" data-eb="checklist">?</span></div>
+</div>
+
+<div class="secLab collapsible" data-target="sec-checklist"><span class="n">07</span>Vor jedem Trade — Checkliste <span class="eb" data-eb="checklist">?</span> <span class="chev">▾</span></div>
+<div class="sec" id="sec-checklist">
 <div class="card check">
   <label><input type="checkbox"><span><b>Regime stimmt mit Instrument überein?</b> Grid nur bei RANGING, direktional nur bei TRENDING. Bei ÜBERGANG/CHAOTISCH/Squeeze: warten oder sehr klein.</span></label>
   <label><input type="checkbox"><span><b>Richtung gegen das Crowding?</b> Wenn deine Seite schon überfüllt ist, tradest du in ein Squeeze-Risiko hinein.</span></label>
@@ -217,6 +263,8 @@
   <label><input type="checkbox"><span><b>Positionsgrösse relativ zum Kapital?</b> Hebel multipliziert beide Richtungen. Lege fest, was ein Stop dich kostet, bevor du öffnest.</span></label>
   <label><input type="checkbox"><span><b>Funding-Kosten über die Haltedauer?</b> Bei 1W+ zahlt oder bekommt deine Seite Funding — über Tage summiert sich das.</span></label>
   <label><input type="checkbox"><span><b>Plan für Regime-Wechsel?</b> Was tust du, wenn RANGING in TRENDING kippt, während dein Grid läuft — oder umgekehrt?</span></label>
+</div>
+
 </div>
 
 <footer>
@@ -230,6 +278,19 @@
 <div class="scrim" id="scrim"></div>
 <div class="sheet" id="sheet"><span class="x" id="sx">✕</span><h3 id="shT"></h3><p id="shW"></p><div class="hist" id="shH"></div></div>
 
+<div class="scrim" id="logScrim"></div>
+<div class="sheet" id="logSheet">
+  <span class="x" id="logX">✕</span>
+  <h3>Moment festhalten</h3>
+  <p style="margin-bottom:9px">Snapshot des jetzigen Zustands. Ergänze These und Stop — später trägst du ein, wie es ausging. Ein Spiegel, kein Signalgeber: nutze es, wenn du <b>tatsächlich</b> entscheidest, nicht bei jedem Blick.</p>
+  <div class="snap" id="logSnap">—</div>
+  <textarea class="logInp" id="logThese" placeholder="Deine These (optional): warum jetzt, welche Richtung?"></textarea>
+  <input class="logInp" id="logStop" placeholder="Stop / Plan (optional): wo steigst du aus?">
+  <button class="logSave" id="logSaveBtn">Eintrag speichern</button>
+  <div id="calibBox"></div>
+  <div class="logList" id="logList"></div>
+</div>
+
 <script>
 var SYM='BTCUSDT';
 var FAPI='https://fapi.binance.com', API='https://api.binance.com';
@@ -240,6 +301,10 @@ var FUND_NEUTRAL=0.0001;
 var CONFIG={ regime:{ rangeADX:20, trendADX:25, chaosVol:0.88, sqOI:5, sqVol:0.75, sqCrowd:60 } };
 var LIQ_WINDOW=3600*1000, LIQ_MAX=18;
 var liqEvents=[], lastPx=null;
+var nextFundingMs=null, fundingCur=null;
+var lastState={regime:'—', coh:'lade…', cohCol:'var(--mut)', score:0, funding:null, px:null};
+var COLLAPSE_KEY='strom_collapse_v1', LOG_KEY='strom_log_v1';
+var DEFAULT_COLLAPSED={'sec-levels':true, 'sec-kontext':true};
 
 function $(id){return document.getElementById(id);}
 function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
@@ -283,10 +348,10 @@ async function getKlines(interval,limit){ return jget(API+'/api/v3/klines?symbol
 async function getFunding(){
   var hist=await jget(FAPI+'/fapi/v1/fundingRate?symbol='+SYM+'&limit=1000');
   var rates=hist.map(function(h){return parseFloat(h.fundingRate);});
-  var cur=rates[rates.length-1];
-  try{ var pi=await jget(FAPI+'/fapi/v1/premiumIndex?symbol='+SYM); cur=parseFloat(pi.lastFundingRate); }catch(e){}
+  var cur=rates[rates.length-1], nextFunding=null;
+  try{ var pi=await jget(FAPI+'/fapi/v1/premiumIndex?symbol='+SYM); cur=parseFloat(pi.lastFundingRate); nextFunding=pi.nextFundingTime||null; }catch(e){}
   var p=percentile(rates,cur), r7=rates.slice(-21), p7=rates.slice(-42,-21);
-  return {cur:cur, p:p, signed:signedFromPct(p), avg7:mean(r7), trend7:mean(r7)-mean(p7)};
+  return {cur:cur, p:p, signed:signedFromPct(p), avg7:mean(r7), trend7:mean(r7)-mean(p7), nextFunding:nextFunding};
 }
 async function getLS(){ var h=await jget(FAPI+'/futures/data/globalLongShortAccountRatio?symbol='+SYM+'&period=2h&limit=500');
   var a=h.map(function(x){return parseFloat(x.longShortRatio);}), c=a[a.length-1], p=percentile(a,c);
@@ -397,6 +462,7 @@ function renderCoherence(base,dirUp,score){
   $('lgHead').textContent=c.v; $('lgHead').style.color=c.c;
   $('lgBody').textContent=c.t;
   $('lagebild').style.borderLeftColor=c.c;
+  return c;
 }
 function renderScore(parts){
   var keys=['fund','ls','tk'], names={fund:'Funding',ls:'L/S-Konten',tk:'Taker-Flow'};
@@ -513,7 +579,11 @@ async function refresh(){
   var volP=vol?vol.p:null, oiD=oi?oi.dOI:0, dirUp=adxInfo?adxInfo.plusDI>=adxInfo.minusDI:true;
   var reg=classifyRegime(adxInfo?adxInfo.adx:null, volP==null?0:volP, oiD, crowdAbs);
   renderRegime(reg, adxInfo?adxInfo.adx:null, volP, score, dirUp, adxInfo);
-  renderCoherence(reg.base, dirUp, score);
+  var coh=renderCoherence(reg.base, dirUp, score);
+
+  nextFundingMs = fRaw?fRaw.nextFunding:null; fundingCur = fRaw?fRaw.cur:null; renderFundingClock();
+  var regLabel = reg.base + (reg.base==='TRENDING'?(dirUp?' ↑':' ↓'):'');
+  lastState = {regime:regLabel, coh:coh.v, cohCol:coh.c, score:score, funding:fRaw?fRaw.cur:null, px:lastPx};
 
   renderHorizon(fRaw, oi, vol, emaInfo);
   renderSqueezeProb(volP, oiD, crowdAbs);
@@ -544,11 +614,88 @@ var EB={
 };
 function openEB(k){ var e=EB[k]; if(!e)return; $('shT').textContent=e.t; $('shW').textContent=e.w; $('shH').textContent=e.h; $('scrim').classList.add('on'); $('sheet').classList.add('on'); }
 function closeEB(){ $('scrim').classList.remove('on'); $('sheet').classList.remove('on'); }
-document.addEventListener('click',function(ev){ var t=ev.target; if(t.classList&&t.classList.contains('eb')) openEB(t.getAttribute('data-eb')); });
-$('scrim').addEventListener('click',closeEB); $('sx').addEventListener('click',closeEB); $('rfr').addEventListener('click',refresh);
 
-connectWS(); renderLiq(); refresh();
-setInterval(refresh,REFRESH_MS); setInterval(renderLiq,5000);
+/* ===== Funding-Uhr (a1) ===== */
+function renderFundingClock(){
+  var el=$('fclock'); if(!el)return;
+  if(nextFundingMs==null){ el.textContent=''; return; }
+  var ms=nextFundingMs-Date.now(); if(ms<0)ms=0;
+  var h=Math.floor(ms/3600000), m=Math.floor((ms%3600000)/60000);
+  var who = fundingCur==null?'':(Math.abs(fundingCur)<1e-7?'neutral':(fundingCur>0?'Longs zahlen bei Settlement':'Shorts zahlen bei Settlement'));
+  el.innerHTML='⏱ nächstes Funding-Settlement in <b>'+h+'h '+('0'+m).slice(-2)+'m</b>'+(who?' · '+who:'');
+}
+
+/* ===== Einklappbare Sektionen (a2) ===== */
+function loadCollapse(){ try{ var s=localStorage.getItem(COLLAPSE_KEY); return s?JSON.parse(s):null; }catch(e){ return null; } }
+function saveCollapse(m){ try{ localStorage.setItem(COLLAPSE_KEY,JSON.stringify(m)); }catch(e){} }
+function setCollapsed(lab,id,collapsed){ var sec=$(id); if(!sec)return;
+  if(collapsed){ lab.classList.add('collapsed'); sec.classList.add('hidden'); } else { lab.classList.remove('collapsed'); sec.classList.remove('hidden'); } }
+function applyCollapse(){ var saved=loadCollapse()||DEFAULT_COLLAPSED;
+  var labs=document.querySelectorAll('.secLab.collapsible');
+  for(var i=0;i<labs.length;i++){ var id=labs[i].getAttribute('data-target'); setCollapsed(labs[i],id,!!saved[id]); } }
+function toggleSec(id){ var lab=document.querySelector('.secLab.collapsible[data-target="'+id+'"]'); if(!lab)return;
+  var nc=!lab.classList.contains('collapsed'); setCollapsed(lab,id,nc);
+  var saved=loadCollapse(); if(!saved){ saved={}; for(var k in DEFAULT_COLLAPSED)saved[k]=DEFAULT_COLLAPSED[k]; }
+  saved[id]=nc; saveCollapse(saved); }
+
+/* ===== Entscheidungs-Log (b) ===== */
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function loadLog(){ try{ var s=localStorage.getItem(LOG_KEY); return s?JSON.parse(s):[]; }catch(e){ return []; } }
+function saveLog(a){ try{ localStorage.setItem(LOG_KEY,JSON.stringify(a)); }catch(e){} }
+function openLog(){
+  var s=lastState, fundTxt=s.funding==null?'—':(s.funding*100).toFixed(4)+'%';
+  $('logSnap').innerHTML='<b>'+s.regime+'</b> · Kurzlesung <b style="color:'+s.cohCol+'">'+esc(s.coh)+'</b><br>Score <b>'+(s.score>0?'+':'')+s.score+'</b> · Funding '+fundTxt+' · BTC '+fmtPx(s.px)+'<br><span style="color:var(--mut2)">'+new Date().toLocaleString('de-CH')+'</span>';
+  $('logThese').value=''; $('logStop').value=''; renderLogList();
+  $('logScrim').classList.add('on'); $('logSheet').classList.add('on');
+}
+function closeLog(){ $('logScrim').classList.remove('on'); $('logSheet').classList.remove('on'); }
+function saveLogEntry(){
+  var s=lastState, arr=loadLog();
+  arr.push({ id:Date.now(), ts:Date.now(), regime:s.regime, coh:s.coh, cohCol:s.cohCol, score:s.score, funding:s.funding, px:s.px,
+             these:$('logThese').value.trim(), stop:$('logStop').value.trim(), out:'' });
+  saveLog(arr); $('logThese').value=''; $('logStop').value=''; renderLogList();
+}
+function setOutcome(id,val){ var arr=loadLog();
+  for(var i=0;i<arr.length;i++){ if(arr[i].id===id){ arr[i].out=(arr[i].out===val?'':val); break; } }
+  saveLog(arr); renderLogList(); }
+function delEntry(id){ if(!confirm('Diesen Eintrag löschen?'))return; saveLog(loadLog().filter(function(e){return e.id!==id;})); renderLogList(); }
+function renderCalib(arr){
+  var box=$('calibBox'), withOut=arr.filter(function(e){return e.out;});
+  if(withOut.length<3){ box.innerHTML=''; return; }
+  var g={}; withOut.forEach(function(e){ if(!g[e.coh])g[e.coh]={up:0,flat:0,down:0,n:0}; if(g[e.coh][e.out]!=null){g[e.coh][e.out]++;g[e.coh].n++;} });
+  var rows=Object.keys(g).map(function(k){ var x=g[k];
+    return '<div class="crow2"><span>'+esc(k)+'</span><span class="num">'+x.up+'↑ / '+x.flat+'→ / '+x.down+'↓ · n='+x.n+'</span></div>'; }).join('');
+  box.innerHTML='<div class="calib"><div class="ct">Persönliche Beobachtung — keine Prognose</div>'+rows+'<div style="font-size:10.5px;color:var(--mut2);margin-top:8px;line-height:1.5">Was in deiner eigenen Stichprobe 24h nach jeder Kurzlesung folgte. Rein deskriptiv, nie ein Auto-Signal. Erst ab ~30 Einträgen halbwegs aussagekräftig — davor Zufall.</div></div>';
+}
+function renderLogList(){
+  var arr=loadLog(), rev=arr.slice().reverse(), el=$('logList'); renderCalib(arr);
+  if(!rev.length){ el.innerHTML='<div class="logEmpty">Noch keine Einträge. „Moment festhalten" speichert den jetzigen Zustand lokal in deinem Browser — nutze es, wenn du tatsächlich handelst, nicht bei jedem Blick.</div>'; return; }
+  el.innerHTML=rev.map(function(e){
+    var d=new Date(e.ts), when=d.toLocaleDateString('de-CH')+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+    var fundTxt=e.funding==null?'—':(e.funding*100).toFixed(3)+'%';
+    var outs=[['up','↑ rauf'],['flat','→ seitw.'],['down','↓ runter']];
+    var outHtml=outs.map(function(o){ return '<button class="outbtn'+(e.out===o[0]?' on':'')+'" data-out="'+o[0]+'" data-id="'+e.id+'">'+o[1]+'</button>'; }).join('');
+    return '<div class="logEntry"><div class="lhead">'+when+'<span class="del" data-del="'+e.id+'">✕</span></div>'+
+      '<div class="lverdict" style="color:'+(e.cohCol||'var(--ink)')+'">'+esc(e.coh)+'</div>'+
+      '<div class="lmeta">'+esc(e.regime)+' · Score '+(e.score>0?'+':'')+e.score+' · Funding '+fundTxt+' · BTC '+fmtPx(e.px)+'</div>'+
+      (e.these?'<div class="lthese"><b>These:</b> '+esc(e.these)+(e.stop?' · <b>Stop:</b> '+esc(e.stop):'')+'</div>':(e.stop?'<div class="lthese"><b>Stop:</b> '+esc(e.stop)+'</div>':''))+
+      '<div class="outrow"><span style="font-size:11px;color:var(--mut2)">Ausgang 24h:</span>'+outHtml+'</div></div>';
+  }).join('');
+}
+
+/* ===== Event-Verdrahtung ===== */
+document.addEventListener('click',function(ev){ var t=ev.target;
+  if(t.classList&&t.classList.contains('eb')){ openEB(t.getAttribute('data-eb')); return; }
+  if(t.getAttribute&&t.getAttribute('data-del')){ delEntry(parseInt(t.getAttribute('data-del'),10)); return; }
+  if(t.getAttribute&&t.getAttribute('data-out')){ setOutcome(parseInt(t.getAttribute('data-id'),10), t.getAttribute('data-out')); return; }
+  var lab=t.closest?t.closest('.secLab.collapsible'):null; if(lab){ toggleSec(lab.getAttribute('data-target')); return; }
+});
+$('scrim').addEventListener('click',closeEB); $('sx').addEventListener('click',closeEB); $('rfr').addEventListener('click',refresh);
+$('logBtn').addEventListener('click',openLog); $('logX').addEventListener('click',closeLog); $('logScrim').addEventListener('click',closeLog);
+$('logSaveBtn').addEventListener('click',saveLogEntry);
+
+applyCollapse(); connectWS(); renderLiq(); refresh();
+setInterval(refresh,REFRESH_MS); setInterval(renderLiq,5000); setInterval(renderFundingClock,20000);
 </script>
 </body>
 </html>
