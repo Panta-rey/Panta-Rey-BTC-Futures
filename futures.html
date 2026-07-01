@@ -32,6 +32,10 @@
   @keyframes p{0%{box-shadow:0 0 0 0 rgba(47,191,160,.5)}70%{box-shadow:0 0 0 6px rgba(47,191,160,0)}100%{box-shadow:0 0 0 0 rgba(47,191,160,0)}}
   .rfr{background:none;border:1px solid var(--line2);color:var(--mut);border-radius:7px;font-size:13px;padding:3px 9px;cursor:pointer;font-family:inherit}
   .rfr:hover{color:var(--ink);border-color:var(--rapid)}
+  .lagebild{border-left:3px solid var(--mut);background:var(--panel2);border-radius:0 12px 12px 0;padding:10px 14px 11px;margin-bottom:12px;transition:border-color .4s}
+  .lgLab{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:1.2px;display:flex;align-items:center}
+  .lgHead{font-size:16px;font-weight:700;margin:3px 0 3px;transition:color .4s}
+  .lgBody{font-size:12.5px;color:#c8d2de;line-height:1.5}
   .secLab{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:1.2px;margin:20px 2px 9px;display:flex;align-items:center;gap:2px}
   .secLab .n{color:var(--mut2);font-family:var(--mono);margin-right:7px}
   .regime{border-radius:18px;padding:20px 17px 17px;margin-bottom:6px;border:1px solid var(--line2);position:relative;overflow:hidden;background:linear-gradient(180deg,var(--panel),var(--panel2))}
@@ -122,6 +126,12 @@
   </div>
   <button class="rfr" id="rfr">↻</button>
 </header>
+
+<div class="lagebild" id="lagebild">
+  <div class="lgLab">Kurzlesung <span class="eb" data-eb="lagebild">?</span></div>
+  <div class="lgHead" id="lgHead">lade…</div>
+  <div class="lgBody" id="lgBody">Regime und Positionierung werden zusammengelesen…</div>
+</div>
 
 <div class="secLab"><span class="n">01</span>Markt-Regime — welches Instrument? <span class="eb" data-eb="regime">?</span></div>
 <div class="regime" id="regimeCard">
@@ -325,6 +335,24 @@ var REGIME_DEF={
   CHAOTISCH:{instr:'Warten — kein sauberes Terrain', col:'var(--coral)', badge:'Hände weg'},
   UNBEKANNT:{instr:'Daten unvollständig', col:'var(--mut)', badge:'—'}
 };
+function computeCoherence(base,dirUp,score){
+  var crowd = score<-DEADZONE?-1:score>DEADZONE?1:0;   // -1 Longs überfüllt (stützt abwärts), +1 Shorts überfüllt (stützt aufwärts)
+  var crowdW = crowd<0?'Longs überfüllt':crowd>0?'Shorts überfüllt':'Positionierung ausgeglichen';
+  if(base==='TRENDING'){
+    var td=dirUp?1:-1, dirW=dirUp?'aufwärts':'abwärts';
+    if(crowd===0) return {v:'Trend ohne Crowding-Rücken', t:'Trend '+dirW+', Positionierung aber ausgeglichen — kein Rücken- oder Gegenwind aus dem Crowding.', c:'var(--amber)'};
+    if(crowd===td){ var fuel=dirUp?'überfüllte Shorts als Aufwärts-Brennstoff':'überfüllte Longs als Abwärts-Brennstoff';
+      return {v:'Kohärent '+dirW, t:'Regime und Positionierung zeigen in dieselbe Richtung: '+(dirUp?'steigender':'fallender')+' Trend mit '+fuel+'. Kein Widerspruch zwischen den Ebenen.', c:dirUp?'var(--teal)':'var(--coral)'}; }
+    return {v:'Spannung', t:'Trend '+dirW+', aber '+crowdW.toLowerCase()+' — Squeeze-Risiko gegen den Trend. Regime und Positionierung widersprechen sich; Trend-Einstiege sind hier heikler.', c:'var(--amber)'};
+  }
+  if(base==='RANGING'){
+    if(crowd===0) return {v:'Neutrales Grid-Umfeld', t:'Seitwärts-Terrain, Positionierung ausgeglichen — kein klarer Bias für die Grid-Richtung.', c:'var(--teal)'};
+    return {v:'Seitwärts mit Bias', t:'Seitwärts-Terrain, '+crowdW.toLowerCase()+' — im Range-Kontext leichte Rückschlag-Neigung '+(crowd<0?'nach unten':'nach oben')+'.', c:'var(--amber)'};
+  }
+  if(base==='ÜBERGANG') return {v:'Übergang — kein Setup', t:'Trendstärke unentschieden. Die Positionierung ('+crowdW.toLowerCase()+') ist hier nur Kontext, kein Terrain für einen Einstieg.', c:'var(--amber)'};
+  if(base==='CHAOTISCH') return {v:'Chaotisch — warten', t:'Hohe Vola ohne Trend. Egal wie überfüllt die Positionierung ist — kein sauberes Setup.', c:'var(--coral)'};
+  return {v:'Daten unvollständig', t:'Regime-Quelle fehlt — Kurzlesung erscheint, sobald ADX/Vola geladen sind.', c:'var(--mut)'};
+}
 function instrFor(base,dirUp,volP,score){
   var volTxt=volP>=0.75?'hoch':volP>=0.4?'mittel':'niedrig';
   if(base==='RANGING') return {t:'RANGING → Grid Bot ist das passende Instrument', items:[
@@ -363,6 +391,12 @@ function renderRegime(reg,adx,volP,score,dirUp,di){
   var sb=$('squeezeBanner');
   if(reg.squeeze){ sb.classList.add('on'); $('squeezeTxt').textContent='OI steigt, Vola hoch und Positionierung extrem — hier beginnen Liquidations-Kaskaden, nicht Positionen. Kontra-Signal zum kurzfristigen Einstieg.'; }
   else sb.classList.remove('on');
+}
+function renderCoherence(base,dirUp,score){
+  var c=computeCoherence(base,dirUp,score);
+  $('lgHead').textContent=c.v; $('lgHead').style.color=c.c;
+  $('lgBody').textContent=c.t;
+  $('lagebild').style.borderLeftColor=c.c;
 }
 function renderScore(parts){
   var keys=['fund','ls','tk'], names={fund:'Funding',ls:'L/S-Konten',tk:'Taker-Flow'};
@@ -479,6 +513,7 @@ async function refresh(){
   var volP=vol?vol.p:null, oiD=oi?oi.dOI:0, dirUp=adxInfo?adxInfo.plusDI>=adxInfo.minusDI:true;
   var reg=classifyRegime(adxInfo?adxInfo.adx:null, volP==null?0:volP, oiD, crowdAbs);
   renderRegime(reg, adxInfo?adxInfo.adx:null, volP, score, dirUp, adxInfo);
+  renderCoherence(reg.base, dirUp, score);
 
   renderHorizon(fRaw, oi, vol, emaInfo);
   renderSqueezeProb(volP, oiD, crowdAbs);
@@ -492,6 +527,7 @@ async function refresh(){
 }
 
 var EB={
+  lagebild:{t:'Kurzlesung — Regime × Positionierung', w:'Die eine Zeile ganz oben liest die beiden wichtigsten Ebenen zusammen: das Regime (Trendrichtung) und die Positionierung (wer überfüllt ist). Sie sagt, ob die beiden in dieselbe Richtung zeigen („kohärent"), sich widersprechen („Spannung"), oder ob das Terrain gar kein Setup hergibt.', h:'Das ist bewusst eine Beschreibung, keine Empfehlung. „Kohärent abwärts" heisst NICHT „geh short" — es heisst, dass fallender Trend und überfüllte Longs zufällig in dieselbe Richtung deuten. „Spannung" ist oft das Wertvollere: ein Trend, gegen den die Crowd steht, trägt Squeeze-Risiko. Die Entscheidung bleibt bei dir (Checkliste); die Kurzlesung nimmt dir nur das Zusammenrechnen der beiden Ebenen ab, das du sonst im Kopf machen müsstest.'},
   regime:{t:'Markt-Regime — der primäre Output', w:'Bevor du Richtung oder Grösse überlegst, kommt die Frage: welches Instrument passt überhaupt? Grid-Bots gewinnen in seitwärts pendelnden Märkten und liquidieren in Trends. Direktionale Longs/Shorts gewinnen in Trends und werden in Choppiness zerrieben. Das Regime entscheidet, WAS du tust — nicht nur wohin.', h:'Abgeleitet aus ADX(14) auf Tageskerzen (Trendstärke, richtungsneutral), realisierter Vola-Perzentil und OI-Richtung. Wichtig: der Trend hat Vorrang — ein starker Trend (ADX≥25) bleibt TRENDING, auch wenn die Vola hoch ist; hohe Vola heisst dann „schnell, kleiner positionieren", nicht „Chaos". CHAOTISCH ist reserviert für hohe Vola OHNE Trend (ADX<25) — also richtungsloses Gezappel. Schwellen sind heuristisch, im Footer offengelegt; kein Backtest dahinter, ein Lese-Rahmen, kein bewiesener Edge.'},
   score:{t:'Positionierung — wer steht überfüllt?', w:'Ein signierter Score −100…+100. Negativ = Longs überfüllt (Abwärts-Squeeze-Risiko, falls du hier long gehst). Positiv = Shorts überfüllt. Mitte = Totzone „ausgeglichen". Drei gemessene, perzentil-normierte Achsen: Funding (halbes Gewicht), Konten-Ratio, Taker-Flow.', h:'Sekundär zum Regime: erst wenn klar ist, dass du direktional tradest, sagt dir der Score die Richtungs-Tendenz. Bei einem Grid sagt er, ob du Long- oder Short-Bias in die Range legst. Keine Kursprognose.'},
   funding:{t:'Funding-Perzentil (Gewicht 0.50)', w:'Funding ist der direkteste Crowding-Messwert: positiv = Longs zahlen Shorts = Longs gedrängt. Gewertet wird das Perzentil gegen ~333 Tage eigene Historie, nicht der Rohwert.', h:'Absolut-Gate: liegt Funding unter dem Binance-Neutral (0.01%/8h), wird der relative Beitrag gedämpft (Faktor 0.35–1.0, je näher an null desto stärker). So kann trivial-mildes Funding den Score nicht dominieren, nur weil es perzentil-hoch ist — bei absolut nahezu null Funding gibt es keinen echten Kostendruck, also überlebt nur ein kleiner Rest des relativen Signals. Dieselbe Idee wie die Coinbase-Premium-Totzone in Panta Rey.'},
